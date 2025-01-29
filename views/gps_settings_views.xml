@@ -37,7 +37,7 @@
     <!-- Menú para acceder a la configuración -->
     <menuitem id="menu_evisiongps_settings"
               name="Configuración GPS"
-              parent="fleet.fleet_menu_root"
+              parent="fleet.menu_root"
               action="action_evisiongps_settings"
               sequence="20"/>
 </odoo>
