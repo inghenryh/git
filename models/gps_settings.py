@@ -59,7 +59,8 @@ class EvisionGPSSettings(models.Model):
                     'type': 'danger',
                 },
             }
-@api.model
+
+    @api.model
     def create(self, vals):
         """Evita la creación de múltiples registros de configuración."""
         existing = self.search([], limit=1)
