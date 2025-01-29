@@ -1,0 +1,36 @@
+<odoo>
+    <!-- Vista del formulario de configuración -->
+    <record id="view_gps_settings_form" model="ir.ui.view">
+        <field name="name">gps.settings.form</field>
+        <field name="model">evisiongps.settings</field>
+        <field name="arch" type="xml">
+            <form string="Configuración de e-Vision GPS">
+                <sheet>
+                    <group>
+                        <!-- Campos de configuración -->
+                        <field name="email"/>
+                        <field name="password" password="True"/>
+                        <!-- Botón para probar la conexión -->
+                        <button string="Probar Conexión" type="object" name="test_connection" class="btn-prim>
+                    </group>
+                    <group>
+                        <!-- Estado de conexión y hash -->
+                        <field name="connection_status" widget="statusbar" options="{'clickable': False}"/>
+                        <field name="user_api_hash" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Acción para abrir la vista de configuración -->
+    <record id="action_evisiongps_settings" model="ir.actions.act_window">
+        <field name="name">Configuración de e-Vision GPS</field>
+        <field name="res_model">evisiongps.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <!-- Contexto predeterminado para la configuración -->
+        <field name="context">{'default_connection_status': 'not_tested'}</field>
+        <field name="domain">[]</field>
+    </record>
+</odoo>

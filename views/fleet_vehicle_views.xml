@@ -1,0 +1,17 @@
+<odoo>
+    <record id="view_fleet_vehicle_form_inherit_gps" model="ir.ui.view">
+        <field name="name">fleet.vehicle.form.inherit.gps</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="GPS">
+                    <field name="gps_imei"/>
+                    <field name="gps_sim_number"/>
+                    <field name="gps_online_status" readonly="1"/>
+                    <field name="gps_last_location" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>
