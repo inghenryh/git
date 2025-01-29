@@ -11,7 +11,7 @@
                         <field name="email"/>
                         <field name="password" password="True"/>
                         <!-- Botón para probar la conexión -->
-                        <button string="Probar Conexión" type="object" name="test_connection" class="btn-prim>
+                        <button string="Probar Conexión" type="object" name="test_connection" class="btn-primary"/>
                     </group>
                     <group>
                         <!-- Estado de conexión y hash -->
@@ -33,4 +33,11 @@
         <field name="context">{'default_connection_status': 'not_tested'}</field>
         <field name="domain">[]</field>
     </record>
+
+    <!-- Menú para acceder a la configuración -->
+    <menuitem id="menu_evisiongps_settings"
+              name="Configuración GPS"
+              parent="fleet.fleet_menu_root"
+              action="action_evisiongps_settings"
+              sequence="20"/>
 </odoo>
