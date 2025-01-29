@@ -9,7 +9,7 @@
     'data': [
         'views/gps_settings_views.xml',
         'security/ir.model.access.csv',
-        'views/fleet_vehicle_views.xml',  # Si tienes otra vista
+        'views/fleet_vehicle_views.xml',  # Si tienes 
         'views/menu_views.xml',
     ],
     'installable': True,
