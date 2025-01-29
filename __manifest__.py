@@ -11,7 +11,6 @@
         'security/ir.model.access.csv',
         'views/fleet_vehicle_views.xml',  # Si tienes otra vista
         'views/menu_views.xml',
-        'security/ir.model.access.csv',  # Si 
     ],
     'installable': True,
     'application': True,
