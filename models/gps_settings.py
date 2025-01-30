@@ -16,8 +16,16 @@ class EvisionGPSSettings(models.Model):
     ], string='Estado de Conexión', readonly=True, default='not_tested')
 
     @api.model
+    def get_default_settings(self):
+        """Obtiene la configuración existente o crea una nueva si no existe."""
+        existing = self.search([], limit=1)
+        if existing:
+            return existing
+        return self.create({'connection_status': 'not_tested'})
+
+    @api.model
     def create(self, vals):
-        """Si ya existe una configuración, en lugar de crear una nueva, actualiza la existente."""
+        """Si ya existe una configuración, actualizarla en lugar de crear una nueva."""
         existing = self.search([], limit=1)
         if existing:
             existing.write(vals)
@@ -38,7 +46,7 @@ class EvisionGPSSettings(models.Model):
                 if data.get('user_api_hash'):
                     self.user_api_hash = data['user_api_hash']
                     self.connection_status = 'connected'
-                    self.env.cr.commit()  # Asegura que los datos se guarden
+                    self.env.cr.commit()  # Guarda los datos en la base de datos
                     return {
                         'type': 'ir.actions.client',
                         'tag': 'display_notification',

@@ -29,7 +29,6 @@
         <field name="res_model">evisiongps.settings</field>
         <field name="view_mode">form</field>
         <field name="target">current</field>
-        <!-- Contexto predeterminado para la configuración -->
         <field name="context">{'default_connection_status': 'not_tested'}</field>
         <field name="domain">[]</field>
     </record>
