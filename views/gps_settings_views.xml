@@ -7,14 +7,11 @@
             <form string="Configuración de e-Vision GPS">
                 <sheet>
                     <group>
-                        <!-- Campos de configuración -->
                         <field name="email"/>
                         <field name="password" password="True"/>
-                        <!-- Botón para probar la conexión -->
                         <button string="Probar Conexión" type="object" name="test_connection" class="btn-primary"/>
                     </group>
                     <group>
-                        <!-- Estado de conexión y hash -->
                         <field name="connection_status" widget="statusbar" options="{'clickable': False}"/>
                         <field name="user_api_hash" readonly="1"/>
                     </group>
@@ -28,6 +25,7 @@
         <field name="name">Configuración de e-Vision GPS</field>
         <field name="res_model">evisiongps.settings</field>
         <field name="view_mode">form</field>
+        <field name="view_id" ref="view_gps_settings_form"/>
         <field name="target">current</field>
         <field name="context">{'search_default_id': 1, 'default_connection_status': 'not_tested'}</field>
         <field name="domain">[]</field>

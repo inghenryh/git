@@ -5,7 +5,8 @@ class EvisionGPSSettings(models.Model):
     _name = 'evisiongps.settings'
     _description = 'Configuración de e-Vision GPS'
     _rec_name = 'email'
-    
+    _order = 'id desc'
+
     email = fields.Char(string='Correo Electrónico', required=True)
     password = fields.Char(string='Contraseña', required=True)
     user_api_hash = fields.Char(string='Hash de Usuario', readonly=True)
@@ -16,12 +17,17 @@ class EvisionGPSSettings(models.Model):
     ], string='Estado de Conexión', readonly=True, default='not_tested')
 
     @api.model
-    def get_default_settings(self):
-        """Obtiene la configuración existente o la crea si no existe."""
-        existing = self.search([], limit=1)
-        if existing:
-            return existing
-        return self.create({'email': '', 'password': '', 'connection_status': 'not_tested'})
+    def get_config_record(self):
+        """Obtiene la configuración guardada. Si no existe, la crea y la devuelve."""
+        config = self.search([], limit=1)
+        if not config:
+            config = self.create({
+                'email': '',
+                'password': '',
+                'user_api_hash': '',
+                'connection_status': 'not_tested'
+            })
+        return config
 
     @api.model
     def create(self, vals):
@@ -48,7 +54,7 @@ class EvisionGPSSettings(models.Model):
                         'user_api_hash': data['user_api_hash'],
                         'connection_status': 'connected'
                     })
-                    self.env.cr.commit()  # Guarda los datos en la base de datos
+                    self.env.cr.commit()  # Guarda en la base de datos
                     return {
                         'type': 'ir.actions.client',
                         'tag': 'display_notification',
