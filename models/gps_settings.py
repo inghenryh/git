@@ -4,9 +4,7 @@ import requests
 class EvisionGPSSettings(models.Model):
     _name = 'evisiongps.settings'
     _description = 'Configuración de e-Vision GPS'
-    _rec_name = 'email'
-    _order = 'id desc'
-
+    
     email = fields.Char(string='Correo Electrónico', required=True)
     password = fields.Char(string='Contraseña', required=True)
     user_api_hash = fields.Char(string='Hash de Usuario', readonly=True)
@@ -15,29 +13,18 @@ class EvisionGPSSettings(models.Model):
         ('connected', 'Conectado'),
         ('disconnected', 'Desconectado'),
     ], string='Estado de Conexión', readonly=True, default='not_tested')
-    active = fields.Boolean(string="Activa", default=True)
+
+    _sql_constraints = [
+        ('unique_config', 'UNIQUE(email)', 'Solo puede existir una configuración de conexión GPS.')
+    ]
 
     @api.model
-    def get_config_record(self):
-        """Obtiene la configuración guardada o crea una nueva si no existe."""
+    def get_config(self):
+        """Obtiene la única configuración existente o la crea si no existe."""
         config = self.search([], limit=1)
         if not config:
-            config = self.create({
-                'email': '',
-                'password': '',
-                'user_api_hash': '',
-                'connection_status': 'not_tested',
-                'active': True
-            })
+            config = self.create({'email': '', 'password': '', 'user_api_hash': '', 'connection_status': 'not_tested'})
         return config
-
-    @api.model
-    def create(self, vals):
-        """Si ya existe una configuración, desactiva la anterior y crea una nueva."""
-        existing = self.search([], limit=1)
-        if existing:
-            existing.write({'active': False})  # Desactivar la configuración previa
-        return super(EvisionGPSSettings, self).create(vals)
 
     def test_connection(self):
         """Prueba la conexión con e-Vision GPS y guarda el hash si es exitoso."""
@@ -53,16 +40,14 @@ class EvisionGPSSettings(models.Model):
                 if data.get('user_api_hash'):
                     self.write({
                         'user_api_hash': data['user_api_hash'],
-                        'connection_status': 'connected',
-                        'active': True
+                        'connection_status': 'connected'
                     })
-                    self.env.cr.commit()  # Guarda en la base de datos
                     return {
                         'type': 'ir.actions.client',
                         'tag': 'display_notification',
                         'params': {
                             'title': 'Conexión Exitosa',
-                            'message': 'Conexión con e-Vision GPS satisfactoria.',
+                            'message': 'Conexión con e-Vision GPS establecida correctamente.',
                             'type': 'success',
                         },
                     }
