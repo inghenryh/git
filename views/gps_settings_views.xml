@@ -14,9 +14,24 @@
                     <group>
                         <field name="connection_status" widget="statusbar" options="{'clickable': False}"/>
                         <field name="user_api_hash" readonly="1"/>
+                        <field name="active" invisible="1"/>
                     </group>
                 </sheet>
             </form>
+        </field>
+    </record>
+
+    <!-- Vista de lista para mostrar conexiones previas -->
+    <record id="view_gps_settings_tree" model="ir.ui.view">
+        <field name="name">gps.settings.tree</field>
+        <field name="model">evisiongps.settings</field>
+        <field name="arch" type="xml">
+            <tree string="Conexiones Guardadas">
+                <field name="email"/>
+                <field name="connection_status"/>
+                <field name="user_api_hash"/>
+                <field name="active"/>
+            </tree>
         </field>
     </record>
 
@@ -24,11 +39,10 @@
     <record id="action_evisiongps_settings" model="ir.actions.act_window">
         <field name="name">Configuración de e-Vision GPS</field>
         <field name="res_model">evisiongps.settings</field>
-        <field name="view_mode">form</field>
+        <field name="view_mode">tree,form</field>
         <field name="view_id" ref="view_gps_settings_form"/>
         <field name="target">current</field>
-        <field name="context">{'search_default_id': 1, 'default_connection_status': 'not_tested'}</field>
-        <field name="domain">[]</field>
+        <field name="domain">[('active', '=', True)]</field>
     </record>
 
     <!-- Menú para acceder a la configuración -->

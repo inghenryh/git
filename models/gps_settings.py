@@ -15,27 +15,28 @@ class EvisionGPSSettings(models.Model):
         ('connected', 'Conectado'),
         ('disconnected', 'Desconectado'),
     ], string='Estado de Conexión', readonly=True, default='not_tested')
+    active = fields.Boolean(string="Activa", default=True)
 
     @api.model
     def get_config_record(self):
-        """Obtiene la configuración guardada. Si no existe, la crea y la devuelve."""
+        """Obtiene la configuración guardada o crea una nueva si no existe."""
         config = self.search([], limit=1)
         if not config:
             config = self.create({
                 'email': '',
                 'password': '',
                 'user_api_hash': '',
-                'connection_status': 'not_tested'
+                'connection_status': 'not_tested',
+                'active': True
             })
         return config
 
     @api.model
     def create(self, vals):
-        """Si ya existe una configuración, actualizarla en lugar de crear una nueva."""
+        """Si ya existe una configuración, desactiva la anterior y crea una nueva."""
         existing = self.search([], limit=1)
         if existing:
-            existing.write(vals)
-            return existing
+            existing.write({'active': False})  # Desactivar la configuración previa
         return super(EvisionGPSSettings, self).create(vals)
 
     def test_connection(self):
@@ -52,7 +53,8 @@ class EvisionGPSSettings(models.Model):
                 if data.get('user_api_hash'):
                     self.write({
                         'user_api_hash': data['user_api_hash'],
-                        'connection_status': 'connected'
+                        'connection_status': 'connected',
+                        'active': True
                     })
                     self.env.cr.commit()  # Guarda en la base de datos
                     return {
