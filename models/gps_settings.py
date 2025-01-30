@@ -4,6 +4,7 @@ import requests
 class EvisionGPSSettings(models.Model):
     _name = 'evisiongps.settings'
     _description = 'Configuración de e-Vision GPS'
+    _rec_name = 'email'
 
     email = fields.Char(string='Correo Electrónico', required=True)
     password = fields.Char(string='Contraseña', required=True)
@@ -13,6 +14,15 @@ class EvisionGPSSettings(models.Model):
         ('connected', 'Conectado'),
         ('disconnected', 'Desconectado'),
     ], string='Estado de Conexión', readonly=True, default='not_tested')
+
+    @api.model
+    def create(self, vals):
+        """Si ya existe una configuración, en lugar de crear una nueva, actualiza la existente."""
+        existing = self.search([], limit=1)
+        if existing:
+            existing.write(vals)
+            return existing
+        return super(EvisionGPSSettings, self).create(vals)
 
     def test_connection(self):
         """Prueba la conexión con e-Vision GPS y guarda el hash si es exitoso."""
@@ -59,11 +69,3 @@ class EvisionGPSSettings(models.Model):
                     'type': 'danger',
                 },
             }
-
-    @api.model
-    def create(self, vals):
-        """Evita la creación de múltiples registros de configuración."""
-        existing = self.search([], limit=1)
-        if existing:
-            raise ValueError("Ya existe una configuración de e-Vision GPS. No puedes crear otra.")
-        return super(EvisionGPSSettings, self).create(vals)
