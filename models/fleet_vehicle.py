@@ -16,7 +16,7 @@ class FleetVehicle(models.Model):
 
     @api.onchange('has_gps')
     def _onchange_has_gps(self):
-        """Habilita/deshabilita los campos IMEI y SIM al activar o desactivar el GPS."""
+        """Si el GPS está desactivado, borra los valores de IMEI y SIM."""
         if not self.has_gps:
             self.gps_imei = False
             self.gps_sim_number = False
@@ -111,7 +111,6 @@ class FleetVehicle(models.Model):
                             'type': 'success',
                         },
                     }
-
         except Exception as e:
             self.gps_online_status = 'offline'
             return {
