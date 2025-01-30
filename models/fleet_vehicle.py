@@ -21,8 +21,61 @@ class FleetVehicle(models.Model):
             self.gps_imei = False
             self.gps_sim_number = False
 
+    def action_get_location(self):
+        """Obtiene la ubicación actual del vehículo en tiempo real desde e-Vision GPS."""
+        config = self.env['evisiongps.settings'].search([], limit=1)
+        if not config or not config.user_api_hash:
+            raise ValueError("El Hash de Usuario no está configurado en e-Vision GPS.")
+
+        if not self.gps_imei:
+            raise ValueError("El IMEI del GPS no está configurado para este vehículo.")
+
+        url = "https://go.evisiongps.com/api/get_devices"
+        params = {
+            'imei': self.gps_imei,
+            'lang': 'en',
+            'user_api_hash': config.user_api_hash,
+        }
+
+        try:
+            response = requests.get(url, params=params, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+
+                # Si la respuesta es una lista, tomamos el primer elemento
+                if isinstance(data, list) and len(data) > 0:
+                    data = data[0]
+
+                self.gps_last_location = f"{data.get('lat', 'N/A')}, {data.get('lng', 'N/A')}"
+                self.gps_last_update = fields.Datetime.now()
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': 'Ubicación Actualizada',
+                        'message': f'Ubicación: {self.gps_last_location}',
+                        'type': 'success',
+                    },
+                }
+            else:
+                self.gps_last_location = "Error: No se pudo obtener datos"
+        except Exception as e:
+            self.gps_last_location = f"Error: {str(e)}"
+
+    def action_get_routes(self):
+        """Este método será implementado en el futuro."""
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Funcionalidad en Desarrollo',
+                'message': 'La consulta de rutas aún no está disponible.',
+                'type': 'warning',
+            },
+        }
+
     def action_sync_gps(self):
-        """Busca el GPS en e-Vision GPS y lo crea si no existe."""
+        """Sincroniza la existencia del GPS en e-Vision GPS y lo registra si no existe."""
         config = self.env['evisiongps.settings'].search([], limit=1)
         if not config or not config.user_api_hash:
             raise ValueError("El Hash de Usuario no está configurado en e-Vision GPS.")
@@ -59,39 +112,6 @@ class FleetVehicle(models.Model):
                         },
                     }
 
-            # Si el GPS no está registrado, crearlo
-            url_create = "https://go.evisiongps.com/api/add_device"
-            payload = {
-                'imei': self.gps_imei,
-                'name': self.name or f"Vehículo {self.id}",
-                'sim_number': self.gps_sim_number or '',
-                'user_api_hash': config.user_api_hash,
-            }
-
-            response_create = requests.post(url_create, json=payload, timeout=10)
-
-            if response_create.status_code == 200:
-                self.gps_online_status = 'online'
-                return {
-                    'type': 'ir.actions.client',
-                    'tag': 'display_notification',
-                    'params': {
-                        'title': 'GPS Registrado',
-                        'message': f'El GPS con IMEI {self.gps_imei} ha sido registrado en e-Vision GPS.',
-                        'type': 'success',
-                    },
-                }
-            else:
-                self.gps_online_status = 'offline'
-                return {
-                    'type': 'ir.actions.client',
-                    'tag': 'display_notification',
-                    'params': {
-                        'title': 'Error al Crear GPS',
-                        'message': 'No se pudo registrar el GPS en e-Vision GPS.',
-                        'type': 'danger',
-                    },
-                }
         except Exception as e:
             self.gps_online_status = 'offline'
             return {
