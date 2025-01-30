@@ -56,3 +56,15 @@ class FleetVehicle(models.Model):
                 self.gps_last_location = "Error: No se pudo obtener datos"
         except Exception as e:
             self.gps_last_location = f"Error: {str(e)}"
+def action_get_routes(self):
+    """Este método será implementado en el futuro."""
+    return {
+        'type': 'ir.actions.client',
+        'tag': 'display_notification',
+        'params': {
+            'title': 'Funcionalidad en Desarrollo',
+            'message': 'La consulta de rutas aún no está disponible.',
+            'type': 'warning',
+        },
+    }
+   
