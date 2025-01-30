@@ -26,7 +26,7 @@
         <field name="name">gps.settings.tree</field>
         <field name="model">evisiongps.settings</field>
         <field name="arch" type="xml">
-            <tree string="Conexiones Guardadas">
+            <tree>
                 <field name="email"/>
                 <field name="connection_status"/>
                 <field name="user_api_hash"/>
