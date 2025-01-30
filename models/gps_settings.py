@@ -5,10 +5,7 @@ class EvisionGPSSettings(models.Model):
     _name = 'evisiongps.settings'
     _description = 'Configuración de e-Vision GPS'
     _rec_name = 'email'
-    _sql_constraints = [
-        ('unique_config', 'UNIQUE(email)', 'Solo puede haber una configuración de e-Vision GPS.')
-    ]
-
+    
     email = fields.Char(string='Correo Electrónico', required=True)
     password = fields.Char(string='Contraseña', required=True)
     user_api_hash = fields.Char(string='Hash de Usuario', readonly=True)
@@ -20,11 +17,11 @@ class EvisionGPSSettings(models.Model):
 
     @api.model
     def get_default_settings(self):
-        """Obtiene la configuración existente o crea una nueva si no existe."""
+        """Obtiene la configuración existente o la crea si no existe."""
         existing = self.search([], limit=1)
         if existing:
             return existing
-        return self.create({'connection_status': 'not_tested'})
+        return self.create({'email': '', 'password': '', 'connection_status': 'not_tested'})
 
     @api.model
     def create(self, vals):

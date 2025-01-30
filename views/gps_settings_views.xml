@@ -29,7 +29,7 @@
         <field name="res_model">evisiongps.settings</field>
         <field name="view_mode">form</field>
         <field name="target">current</field>
-        <field name="context">{'search_default_id': 1}</field>
+        <field name="context">{'search_default_id': 1, 'default_connection_status': 'not_tested'}</field>
         <field name="domain">[]</field>
     </record>
 
