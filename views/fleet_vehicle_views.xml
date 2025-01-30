@@ -13,8 +13,6 @@
                     <field name="gps_last_location" readonly="1"/>
                     <field name="gps_last_update" readonly="1"/>
 
-                    <button string="Ubicación Actual" type="object" name="action_get_location" class="btn-primary"/>
-                    <button string="Consultar Rutas" type="object" name="action_get_routes" class="btn-secondary" attrs="{'invisible': [('has_gps', '=', False)]}"/>
                     <button string="Sincronizar" type="object" name="action_sync_gps" class="btn-info"/>
                 </group>
             </xpath>
