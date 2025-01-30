@@ -5,6 +5,9 @@ class EvisionGPSSettings(models.Model):
     _name = 'evisiongps.settings'
     _description = 'Configuración de e-Vision GPS'
     _rec_name = 'email'
+    _sql_constraints = [
+        ('unique_config', 'UNIQUE(email)', 'Solo puede haber una configuración de e-Vision GPS.')
+    ]
 
     email = fields.Char(string='Correo Electrónico', required=True)
     password = fields.Char(string='Contraseña', required=True)
@@ -44,8 +47,10 @@ class EvisionGPSSettings(models.Model):
             if response.status_code == 200:
                 data = response.json()
                 if data.get('user_api_hash'):
-                    self.user_api_hash = data['user_api_hash']
-                    self.connection_status = 'connected'
+                    self.write({
+                        'user_api_hash': data['user_api_hash'],
+                        'connection_status': 'connected'
+                    })
                     self.env.cr.commit()  # Guarda los datos en la base de datos
                     return {
                         'type': 'ir.actions.client',
@@ -56,7 +61,7 @@ class EvisionGPSSettings(models.Model):
                             'type': 'success',
                         },
                     }
-            self.connection_status = 'disconnected'
+            self.write({'connection_status': 'disconnected'})
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
@@ -67,7 +72,7 @@ class EvisionGPSSettings(models.Model):
                 },
             }
         except Exception as e:
-            self.connection_status = 'disconnected'
+            self.write({'connection_status': 'disconnected'})
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
