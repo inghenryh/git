@@ -1,15 +1,21 @@
 <odoo>
-    <record id="view_fleet_vehicle_form_inherit_gps" model="ir.ui.view">
-        <field name="name">fleet.vehicle.form.inherit.gps</field>
+    <record id="view_fleet_vehicle_form_gps" model="ir.ui.view">
+        <field name="name">fleet.vehicle.form.gps</field>
         <field name="model">fleet.vehicle</field>
         <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//sheet" position="inside">
+            <xpath expr="//sheet/group" position="inside">
                 <group string="GPS">
-                    <field name="gps_imei"/>
-                    <field name="gps_sim_number"/>
+                    <field name="has_gps"/>
+                    <field name="gps_imei" attrs="{'readonly': [('has_gps', '=', False)]}"/>
+                    <field name="gps_sim_number" attrs="{'readonly': [('has_gps', '=', False)]}"/>
                     <field name="gps_online_status" readonly="1"/>
                     <field name="gps_last_location" readonly="1"/>
+                    <field name="gps_last_update" readonly="1"/>
+
+                    <button string="Ubicación Actual" type="object" name="action_get_location" class="btn-primary"/>
+                    <button string="Consultar Rutas" type="object" name="action_get_routes" class="btn-secondary" attrs="{'invisible': [('has_gps', '=', False)]}"/>
+                    <button string="Sincronizar" type="object" name="action_sync_gps" class="btn-info"/>
                 </group>
             </xpath>
         </field>
