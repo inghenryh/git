@@ -20,7 +20,7 @@
         </field>
     </record>
 
-    <!-- Acción para abrir la configuración, asegurando que solo cargue 1 registro -->
+    <!-- Acción para abrir la configuración asegurando que solo cargue 1 registro -->
     <record id="action_evisiongps_settings" model="ir.actions.act_window">
         <field name="name">Configuración de e-Vision GPS</field>
         <field name="res_model">evisiongps.settings</field>
