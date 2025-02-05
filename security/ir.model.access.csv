@@ -1,3 +1,2 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_fleet_vehicle_gps,fleet.vehicle.gps,model_fleet_vehicle,,1,1,1,1
-access_gps_settings,evisiongps.settings,model_evisiongps_settings,,1,1,1,1
+access_fleet_vehicle_gps,fleet.vehicle user,model_fleet_vehicle,,1,1,1,1
