@@ -24,12 +24,12 @@ class FleetVehicle(models.Model):
             self.gps_imei = False
             self.gps_sim_number = False
 
-    def action_sync_gps(self):
-        """Verifica si el vehículo existe en GPSWOX y, si no, lo crea. Luego, obtiene la información actualizada del GPS."""
+    def action_get_location(self):
+        """Obtiene la ubicación actual del vehículo en tiempo real desde GPSWOX y muestra un mapa con Leaflet."""
         if not self.gps_imei:
-            raise ValueError("Debe ingresar la IMEI del GPS antes de sincronizar.")
+            raise ValueError("Debe ingresar la IMEI del GPS antes de obtener la ubicación.")
 
-        url_get = "https://go.evisiongps.com/api/get_devices"
+        url = "https://go.evisiongps.com/api/get_devices"
         params = {
             'imei': self.gps_imei,
             'lang': 'en',
@@ -37,57 +37,37 @@ class FleetVehicle(models.Model):
         }
 
         try:
-            response = requests.get(url_get, params=params, timeout=10)
+            response = requests.get(url, params=params, timeout=10)
             data = response.json()
 
             if isinstance(data, list) and data:
                 device_data = data[0]  # Tomar el primer dispositivo encontrado
-
-                # Actualizar la información del vehículo en Odoo
-                self.gps_device_id = device_data.get('id')
-                self.gps_online_status = device_data.get('online', 'offline')
                 lat, lon = device_data.get('lat'), device_data.get('lng')
+                self.gps_online_status = device_data.get('online', 'offline')
                 self.gps_speed = device_data.get('speed', 0)
                 self.gps_last_update = fields.Datetime.now()
+                self.gps_device_id = device_data.get('id')
+
                 if lat and lon:
                     self.gps_last_location = f"{lat}, {lon}"
                     self.gps_location_link = f"https://www.google.com/maps?q={lat},{lon}"
 
-                return {
-                    'type': 'ir.actions.client',
-                    'tag': 'display_notification',
-                    'params': {
-                        'title': 'Sincronización Exitosa',
-                        'message': f'Vehículo sincronizado.\nEstado: {self.gps_online_status}\n'
-                                   f'Última Ubicación: {lat}, {lon}\n'
-                                   f'Velocidad: {self.gps_speed} km/h\n'
-                                   f'Última actualización: {self.gps_last_update}\n'
-                                   f'ID del Dispositivo: {self.gps_device_id}',
-                        'type': 'success',
-                    },
-                }
+                    return {
+                        'type': 'ir.actions.act_window',
+                        'name': "Ubicación en tiempo real",
+                        'view_mode': 'form',
+                        'target': 'new',
+                        'res_model': 'fleet.vehicle',
+                        'context': {
+                            'default_gps_location_link': self.gps_location_link,
+                            'default_gps_last_location': self.gps_last_location,
+                            'default_gps_online_status': self.gps_online_status,
+                            'default_gps_speed': self.gps_speed,
+                            'default_gps_last_update': self.gps_last_update,
+                        }
+                    }
 
-            # Si no existe, lo creamos
-            url_create = "https://go.evisiongps.com/api/add_device"
-            payload = {
-                'imei': self.gps_imei,
-                'name': self.name,
-                'lang': 'en',
-                'user_api_hash': "$2y$10$tS7LNxOjhnsqzNkyXKqAke4MHtGUSZE0ZEQS.M9IpDwkuOgfnABPO"
-            }
-            response_create = requests.post(url_create, json=payload, timeout=10)
-            if response_create.status_code == 200:
-                return {
-                    'type': 'ir.actions.client',
-                    'tag': 'display_notification',
-                    'params': {
-                        'title': 'GPS Creado',
-                        'message': f'El dispositivo con IMEI {self.gps_imei} ha sido registrado en GPSWOX.',
-                        'type': 'success',
-                    },
-                }
-            else:
-                raise ValueError("No se pudo registrar el dispositivo en GPSWOX.")
+            raise ValueError("No se pudo obtener datos de ubicación.")
 
         except Exception as e:
             return {
