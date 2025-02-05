@@ -7,8 +7,8 @@
             <xpath expr="//sheet/group" position="inside">
                 <group string="GPS">
                     <field name="has_gps"/>
-                    <field name="gps_imei" attrs="{'readonly': [('has_gps', '=', False)]}"/>
-                    <field name="gps_sim_number" attrs="{'readonly': [('has_gps', '=', False)]}"/>
+                    <field name="gps_imei" readonly="1"/>
+                    <field name="gps_sim_number" readonly="1"/>
                     <field name="gps_online_status" readonly="1"/>
                     <field name="gps_last_location" readonly="1"/>
                     <field name="gps_last_update" readonly="1"/>

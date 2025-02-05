@@ -1,20 +1,18 @@
 from odoo import models, fields, api
 import requests
 
-API_HASH = "$2y$10$tS7LNxOjhnsqzNkyXKqAke4MHtGUSZE0ZEQS.M9IpDwkuOgfnABPO"
-
 class FleetVehicle(models.Model):
     _inherit = 'fleet.vehicle'
 
-    has_gps = fields.Boolean(string="Tiene GPS", default=False)
-    gps_imei = fields.Char(string='IMEI del GPS', help="Número IMEI del dispositivo GPS.")
-    gps_sim_number = fields.Char(string='Número SIM del GPS')
+    has_gps = fields.Boolean(string="Tiene GPS", default=False, help="Activar si el vehículo tiene un dispositivo GPS.")
+    gps_imei = fields.Char(string='IMEI del GPS', help="El número IMEI único del dispositivo GPS.")
+    gps_sim_number = fields.Char(string='Número SIM del GPS', help="El número SIM asociado al GPS.")
     gps_online_status = fields.Selection([
         ('online', 'En línea'),
         ('offline', 'Desconectado'),
-    ], string='Estado del GPS', readonly=True, default='offline')
-    gps_last_location = fields.Char(string='Última Ubicación', readonly=True)
-    gps_last_update = fields.Datetime(string='Última Actualización', readonly=True)
+    ], string='Estado del GPS', readonly=True, default='offline', help="Estado del dispositivo GPS.")
+    gps_last_location = fields.Char(string='Última Ubicación (Lat, Lon)', readonly=True, help="Última ubicación conocida del GPS.")
+    gps_last_update = fields.Datetime(string='Última Actualización', readonly=True, help="Fecha y hora de la última actualización del GPS.")
 
     @api.onchange('has_gps')
     def _onchange_has_gps(self):
@@ -24,12 +22,20 @@ class FleetVehicle(models.Model):
             self.gps_sim_number = False
 
     def action_get_location(self):
-        """Obtiene la ubicación actual del vehículo en tiempo real."""
+        """Obtiene la ubicación actual del vehículo en tiempo real desde GPSWOX."""
+        config = self.env['evisiongps.settings'].search([], limit=1)
+        if not config:
+            raise ValueError("El Hash de Usuario no está configurado en e-Vision GPS.")
+
         if not self.gps_imei:
-            return self._show_notification("Error", "El IMEI del GPS no está configurado.", "danger")
+            raise ValueError("El IMEI del GPS no está configurado para este vehículo.")
 
         url = "https://go.evisiongps.com/api/get_devices"
-        params = {'imei': self.gps_imei, 'lang': 'en', 'user_api_hash': API_HASH}
+        params = {
+            'imei': self.gps_imei,
+            'lang': 'en',
+            'user_api_hash': "$2y$10$tS7LNxOjhnsqzNkyXKqAke4MHtGUSZE0ZEQS.M9IpDwkuOgfnABPO",
+        }
 
         try:
             response = requests.get(url, params=params, timeout=10)
@@ -37,19 +43,35 @@ class FleetVehicle(models.Model):
                 data = response.json()
                 self.gps_last_location = f"{data.get('lat')}, {data.get('lng')}"
                 self.gps_last_update = fields.Datetime.now()
-                return self._show_notification("Ubicación Actualizada", f"Ubicación: {self.gps_last_location}", "success")
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': 'Ubicación Actualizada',
+                        'message': f'Ubicación: {self.gps_last_location}',
+                        'type': 'success',
+                    },
+                }
             else:
-                return self._show_notification("Error", "No se pudo obtener datos del GPS.", "danger")
+                self.gps_last_location = "Error: No se pudo obtener datos"
         except Exception as e:
-            return self._show_notification("Error", f"Ocurrió un error: {str(e)}", "danger")
+            self.gps_last_location = f"Error: {str(e)}"
 
     def action_sync_gps(self):
         """Sincroniza la existencia del GPS en GPSWOX."""
+        config = self.env['evisiongps.settings'].search([], limit=1)
+        if not config:
+            raise ValueError("El Hash de Usuario no está configurado en e-Vision GPS.")
+
         if not self.gps_imei:
-            return self._show_notification("Error", "El IMEI del GPS no está configurado.", "danger")
+            raise ValueError("El IMEI del GPS no está configurado para este vehículo.")
 
         url = "https://go.evisiongps.com/api/get_devices"
-        params = {'imei': self.gps_imei, 'lang': 'en', 'user_api_hash': API_HASH}
+        params = {
+            'imei': self.gps_imei,
+            'lang': 'en',
+            'user_api_hash': "$2y$10$tS7LNxOjhnsqzNkyXKqAke4MHtGUSZE0ZEQS.M9IpDwkuOgfnABPO",
+        }
 
         try:
             response = requests.get(url, params=params, timeout=10)
@@ -57,17 +79,33 @@ class FleetVehicle(models.Model):
                 data = response.json()
                 if data.get('imei'):
                     self.gps_online_status = 'online'
-                    return self._show_notification("GPS Encontrado", f"El IMEI {self.gps_imei} está registrado en GPSWOX.", "success")
+                    return {
+                        'type': 'ir.actions.client',
+                        'tag': 'display_notification',
+                        'params': {
+                            'title': 'GPS Encontrado',
+                            'message': f'El IMEI {self.gps_imei} está registrado en GPSWOX.',
+                            'type': 'success',
+                        },
+                    }
             self.gps_online_status = 'offline'
-            return self._show_notification("GPS No Encontrado", "No se encontró el IMEI en GPSWOX.", "danger")
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'GPS No Encontrado',
+                    'message': 'No se encontró el IMEI en GPSWOX.',
+                    'type': 'danger',
+                },
+            }
         except Exception as e:
             self.gps_online_status = 'offline'
-            return self._show_notification("Error", f"Ocurrió un error: {str(e)}", "danger")
-
-    def _show_notification(self, title, message, notification_type):
-        """Genera una notificación en Odoo."""
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {'title': title, 'message': message, 'type': notification_type},
-        }
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Error',
+                    'message': f'Ocurrió un error: {str(e)}',
+                    'type': 'danger',
+                },
+            }
