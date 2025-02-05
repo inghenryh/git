@@ -13,6 +13,8 @@ class FleetVehicle(models.Model):
     ], string='Estado del GPS', readonly=True, default='offline', help="Estado del dispositivo GPS.")
     gps_last_location = fields.Char(string='Última Ubicación (Lat, Lon)', readonly=True, help="Última ubicación conocida del GPS.")
     gps_last_update = fields.Datetime(string='Última Actualización', readonly=True, help="Fecha y hora de la última actualización del GPS.")
+    gps_speed = fields.Float(string='Velocidad (km/h)', readonly=True, help="Velocidad actual del vehículo en km/h.")
+    gps_device_id = fields.Char(string='ID del Dispositivo', readonly=True, help="ID del dispositivo en GPSWOX.")
 
     @api.onchange('has_gps')
     def _onchange_has_gps(self):
@@ -21,64 +23,8 @@ class FleetVehicle(models.Model):
             self.gps_imei = False
             self.gps_sim_number = False
 
-    def action_get_location(self):
-        """Obtiene la ubicación actual del vehículo en tiempo real desde GPSWOX."""
-        if not self.gps_imei:
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': 'Error',
-                    'message': 'Debe ingresar la IMEI del GPS antes de obtener la ubicación.',
-                    'type': 'danger',
-                },
-            }
-
-        url = "https://go.evisiongps.com/api/get_devices"
-        params = {
-            'imei': self.gps_imei,
-            'lang': 'en',
-            'user_api_hash': "$2y$10$tS7LNxOjhnsqzNkyXKqAke4MHtGUSZE0ZEQS.M9IpDwkuOgfnABPO"
-        }
-
-        try:
-            response = requests.get(url, params=params, timeout=10)
-            data = response.json()
-
-            # Validar la estructura de la respuesta
-            if isinstance(data, list) and len(data) > 0:
-                data = data[0]  # Tomamos el primer elemento
-
-            if isinstance(data, dict) and 'lat' in data and 'lng' in data:
-                lat, lon = data['lat'], data['lng']
-                self.gps_last_location = f"{lat}, {lon}"
-                self.gps_last_update = fields.Datetime.now()
-
-                return {
-                    'type': 'ir.actions.act_window',
-                    'name': 'Ubicación GPS',
-                    'res_model': 'fleet.vehicle',
-                    'view_mode': 'form',
-                    'views': [(self.env.ref('evisiongps-odoo.view_fleet_vehicle_map').id, 'form')],
-                    'target': 'new',
-                    'context': {'default_lat': lat, 'default_lon': lon}
-                }
-
-            raise ValueError("No se pudo obtener datos de ubicación.")
-
-        except Exception as e:
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': 'Error',
-                    'message': f'Ocurrió un error: {str(e)}',
-                    'type': 'danger',
-                },
-            }
-
     def action_sync_gps(self):
-        """Verifica si el vehículo existe en GPSWOX y, si no, lo crea."""
+        """Sincroniza la información del GPS desde GPSWOX y actualiza los datos del vehículo."""
         if not self.gps_imei:
             return {
                 'type': 'ir.actions.client',
@@ -102,17 +48,34 @@ class FleetVehicle(models.Model):
             data = response.json()
 
             if isinstance(data, list) and data:
+                device = data[0]  # Tomamos el primer dispositivo en la lista
+
+                self.gps_device_id = device.get("id", "N/A")
+                self.gps_online_status = "online" if device.get("online") == "online" else "offline"
+                lat, lon = device.get("lat"), device.get("lng")
+                self.gps_last_location = f"{lat}, {lon}" if lat and lon else "No disponible"
+                self.gps_speed = device.get("speed", 0)
+                self.gps_last_update = fields.Datetime.now()
+
+                google_maps_link = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}" if lat and lon else "No disponible"
+
                 return {
                     'type': 'ir.actions.client',
                     'tag': 'display_notification',
                     'params': {
                         'title': 'Sincronización Exitosa',
-                        'message': f'El vehículo con IMEI {self.gps_imei} ya está registrado.',
+                        'message': (
+                            f'📡 Estado: {self.gps_online_status}\n'
+                            f'📍 <a href="{google_maps_link}" target="_blank">Última ubicación</a>\n'
+                            f'🚗 Velocidad: {self.gps_speed} km/h\n'
+                            f'🆔 ID del dispositivo: {self.gps_device_id}\n'
+                            f'🕒 Última actualización: {self.gps_last_update.strftime("%d-%m-%Y %H:%M:%S")}'
+                        ),
                         'type': 'success',
                     },
                 }
 
-            # Si no existe, lo creamos
+            # Si no existe, intentamos crearlo
             url_create = "https://go.evisiongps.com/api/add_device"
             payload = {
                 'imei': self.gps_imei,
