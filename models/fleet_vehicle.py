@@ -41,20 +41,21 @@ class FleetVehicle(models.Model):
             if isinstance(data, list) and data:
                 data = data[0]
 
-            if isinstance(data, dict):
+            if isinstance(data, dict) and 'lat' in data and 'lng' in data:
                 lat, lon = data.get('lat'), data.get('lng')
-                if lat and lon:
-                    self.gps_last_location = f"{lat}, {lon}"
-                    self.gps_last_update = fields.Datetime.now()
-                    return {
-                        'type': 'ir.actions.client',
-                        'tag': 'display_notification',
-                        'params': {
-                            'title': 'Ubicación Actualizada',
-                            'message': f'Ubicación: {self.gps_last_location}',
-                            'type': 'success',
-                        },
-                    }
+                self.gps_last_location = f"{lat}, {lon}"
+                self.gps_last_update = fields.Datetime.now()
+
+                return {
+                    'type': 'ir.actions.act_window',
+                    'name': 'Ubicación del Vehículo',
+                    'res_model': 'fleet.vehicle',
+                    'view_mode': 'form',
+                    'views': [(self.env.ref('evisiongps-odoo.view_fleet_vehicle_map').id, 'form')],
+                    'target': 'new',
+                    'context': {'default_lat': lat, 'default_lon': lon}
+                }
+
             raise ValueError("No se pudo obtener datos de ubicación.")
 
         except Exception as e:
