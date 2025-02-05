@@ -1,0 +1,36 @@
+<odoo>
+    <record id="view_gps_map" model="ir.ui.view">
+        <field name="name">gps.map.view</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="arch" type="xml">
+            <form string="Ubicación en Tiempo Real">
+                <sheet>
+                    <div class="oe_form_field oe_full">
+                        <div id="gps_map" style="height: 500px;"></div>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <template id="gps_map_template" name="Mapa de Ubicación GPS">
+        <t t-call="web.external_layout">
+            <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+            <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    var lat = parseFloat(odoo.session_info.context.default_latitude);
+                    var lon = parseFloat(odoo.session_info.context.default_longitude);
+
+                    var map = L.map('gps_map').setView([lat, lon], 15);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; OpenStreetMap contributors'
+                    }).addTo(map);
+
+                    L.marker([lat, lon]).addTo(map)
+                        .bindPopup("Ubicación Actual del Vehículo")
+                        .openPopup();
+                });
+            </script>
+        </t>
+    </template>
+</odoo>

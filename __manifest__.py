@@ -8,6 +8,7 @@
     'depends': ['fleet', 'base'],
     'data': [
         'views/fleet_vehicle_views.xml',
+        'views/fleet_vehicle_map.xml',
         'security/ir.model.access.csv',
     ],
     'installable': True,

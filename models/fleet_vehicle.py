@@ -22,11 +22,7 @@ class FleetVehicle(models.Model):
             self.gps_sim_number = False
 
     def action_get_location(self):
-        """Obtiene la ubicación actual del vehículo en tiempo real desde GPSWOX."""
-        config = self.env['evisiongps.settings'].search([], limit=1)
-        if not config:
-            raise ValueError("El Hash de Usuario no está configurado en e-Vision GPS.")
-
+        """Obtiene la ubicación actual del vehículo en tiempo real desde GPSWOX y la muestra en un mapa."""
         if not self.gps_imei:
             raise ValueError("El IMEI del GPS no está configurado para este vehículo.")
 
@@ -41,71 +37,25 @@ class FleetVehicle(models.Model):
             response = requests.get(url, params=params, timeout=10)
             if response.status_code == 200:
                 data = response.json()
-                self.gps_last_location = f"{data.get('lat')}, {data.get('lng')}"
-                self.gps_last_update = fields.Datetime.now()
-                return {
-                    'type': 'ir.actions.client',
-                    'tag': 'display_notification',
-                    'params': {
-                        'title': 'Ubicación Actualizada',
-                        'message': f'Ubicación: {self.gps_last_location}',
-                        'type': 'success',
-                    },
-                }
-            else:
-                self.gps_last_location = "Error: No se pudo obtener datos"
-        except Exception as e:
-            self.gps_last_location = f"Error: {str(e)}"
-
-    def action_sync_gps(self):
-        """Sincroniza la existencia del GPS en GPSWOX."""
-        config = self.env['evisiongps.settings'].search([], limit=1)
-        if not config:
-            raise ValueError("El Hash de Usuario no está configurado en e-Vision GPS.")
-
-        if not self.gps_imei:
-            raise ValueError("El IMEI del GPS no está configurado para este vehículo.")
-
-        url = "https://go.evisiongps.com/api/get_devices"
-        params = {
-            'imei': self.gps_imei,
-            'lang': 'en',
-            'user_api_hash': "$2y$10$tS7LNxOjhnsqzNkyXKqAke4MHtGUSZE0ZEQS.M9IpDwkuOgfnABPO",
-        }
-
-        try:
-            response = requests.get(url, params=params, timeout=10)
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('imei'):
-                    self.gps_online_status = 'online'
+                lat, lon = data.get('lat'), data.get('lng')
+                if lat and lon:
+                    self.gps_last_location = f"{lat}, {lon}"
+                    self.gps_last_update = fields.Datetime.now()
                     return {
-                        'type': 'ir.actions.client',
-                        'tag': 'display_notification',
-                        'params': {
-                            'title': 'GPS Encontrado',
-                            'message': f'El IMEI {self.gps_imei} está registrado en GPSWOX.',
-                            'type': 'success',
+                        'type': 'ir.actions.act_window',
+                        'name': 'Ubicación en Mapa',
+                        'res_model': 'ir.actions.act_window',
+                        'view_mode': 'form',
+                        'target': 'new',
+                        'context': {
+                            'default_latitude': lat,
+                            'default_longitude': lon,
                         },
+                        'view_id': self.env.ref('evisiongps-odoo.view_gps_map').id,
                     }
-            self.gps_online_status = 'offline'
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': 'GPS No Encontrado',
-                    'message': 'No se encontró el IMEI en GPSWOX.',
-                    'type': 'danger',
-                },
-            }
+                else:
+                    raise ValueError("No se pudo obtener la ubicación del GPS.")
+            else:
+                raise ValueError("Error en la API: No se pudo obtener la ubicación.")
         except Exception as e:
-            self.gps_online_status = 'offline'
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': 'Error',
-                    'message': f'Ocurrió un error: {str(e)}',
-                    'type': 'danger',
-                },
-            }
+            raise ValueError(f"Error: {str(e)}")
