@@ -14,8 +14,11 @@
                     <field name="gps_last_update" readonly="1"/>
 
                     <button string="Ubicación Actual" type="object" name="action_get_location" class="btn-primary"/>
+                    <button string="Sincronizar" type="object" name="action_sync_gps" class="btn-info"/>               
                 </group>
             </xpath>
         </field>
     </record>
 </odoo>
+
+
