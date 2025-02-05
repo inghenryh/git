@@ -11,7 +11,13 @@
                     <field name="gps_sim_number" modifiers="{'readonly': [['has_gps', '=', False]]}"/>
                     <field name="gps_online_status" readonly="1"/>
                     <field name="gps_last_location" readonly="1"/>
+                    <field name="gps_speed" readonly="1"/>
                     <field name="gps_last_update" readonly="1"/>
+                    <field name="gps_device_id" readonly="1"/>
+                    
+                    <group string="Ubicación en Google Maps">
+                        <field name="gps_location_link" readonly="1"/>
+                    </group>
 
                     <button string="Ubicación Actual" type="object" name="action_get_location" class="btn-primary"/>
                     <button string="Sincronizar" type="object" name="action_sync_gps" class="btn-info"/>               
