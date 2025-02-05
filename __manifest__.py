@@ -9,7 +9,6 @@
     'data': [
         'views/fleet_vehicle_views.xml',
         'security/ir.model.access.csv',
-        'views/menu_views.xml',
     ],
     'installable': True,
     'application': True,
