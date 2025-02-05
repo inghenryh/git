@@ -21,4 +21,35 @@
             </xpath>
         </field>
     </record>
+
+    <record id="view_fleet_vehicle_map" model="ir.ui.view">
+        <field name="name">fleet.vehicle.map.view</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="arch" type="xml">
+            <form string="Ubicación del Vehículo">
+                <group>
+                    <field name="gps_last_location" readonly="1"/>
+                    <button string="Ver en Google Maps" type="object" class="btn-secondary"
+                            attrs="{'invisible': [['gps_last_location', '=', False]]}"
+                            name="open_google_maps"/>
+                </group>
+                <div id="map" style="height: 400px; width: 100%;"/>
+                <script type="text/javascript">
+                    var map = L.map('map').setView([0, 0], 13);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: 'OpenStreetMap contributors'
+                    }).addTo(map);
+                    
+                    function updateMap(lat, lon) {
+                        map.setView([lat, lon], 13);
+                        L.marker([lat, lon]).addTo(map).bindPopup("Ubicación Actual").openPopup();
+                    }
+
+                    setInterval(function() {
+                        // Lógica para obtener nuevas coordenadas cada 20 segundos
+                    }, 20000);
+                </script>
+            </form>
+        </field>
+    </record>
 </odoo>
