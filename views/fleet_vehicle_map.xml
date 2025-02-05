@@ -1,23 +1,34 @@
 <odoo>
-    <template id="gps_map_template">
-        <t t-call="web.external_layout">
-            <div id="map" style="height: 500px; width: 100%;"></div>
-            <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-            <script>
-                var map = L.map('map').setView([0, 0], 13);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors'
-                }).addTo(map);
+    <record id="view_fleet_vehicle_map" model="ir.ui.view">
+        <field name="name">fleet.vehicle.map</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="arch" type="xml">
+            <form string="Ubicación del Vehículo">
+                <sheet>
+                    <group>
+                        <field name="gps_last_location" readonly="1"/>
+                    </group>
+                    <div style="height: 400px; width: 100%;" class="oe_map_container">
+                        <script type="text/javascript" src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+                        <script>
+                            document.addEventListener("DOMContentLoaded", function() {
+                                var lat = parseFloat("{{ context.get('default_lat', 0) }}");
+                                var lon = parseFloat("{{ context.get('default_lon', 0) }}");
 
-                function updateLocation(lat, lon) {
-                    map.setView([lat, lon], 13);
-                    L.marker([lat, lon]).addTo(map).bindPopup("Ubicación Actual").openPopup();
-                }
+                                var map = L.map('map').setView([lat, lon], 13);
+                                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                    attribution: 'OpenStreetMap contributors'
+                                }).addTo(map);
 
-                setInterval(function() {
-                    // Aquí se debe llamar a la API y actualizar la ubicación.
-                }, 20000);
-            </script>
-        </t>
-    </template>
+                                L.marker([lat, lon]).addTo(map)
+                                    .bindPopup("Ubicación del Vehículo")
+                                    .openPopup();
+                            });
+                        </script>
+                        <div id="map" style="height: 100%; width: 100%;"></div>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
 </odoo>
