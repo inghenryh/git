@@ -8,10 +8,17 @@
                     <div id="map" style="height: 500px; width: 100%;"></div>
                     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
                     <script>
-                        var map = L.map('map').setView([0, 0], 13);
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                            attribution: 'OpenStreetMap contributors'
-                        }).addTo(map);
+                        document.addEventListener("DOMContentLoaded", function () {
+                            var lat = parseFloat("${context.get('default_lat', '0')}");
+                            var lon = parseFloat("${context.get('default_lon', '0')}");
+                            var map = L.map('map').setView([lat, lon], 15);
+                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                attribution: 'OpenStreetMap contributors'
+                            }).addTo(map);
+                            L.marker([lat, lon]).addTo(map)
+                                .bindPopup('Ubicación Actual del Vehículo')
+                                .openPopup();
+                        });
                     </script>
                 </sheet>
             </form>

@@ -24,7 +24,15 @@ class FleetVehicle(models.Model):
     def action_get_location(self):
         """Obtiene la ubicación actual del vehículo en tiempo real desde GPSWOX."""
         if not self.gps_imei:
-            raise ValueError("Debe ingresar la IMEI del GPS antes de obtener la ubicación.")
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Error',
+                    'message': 'Debe ingresar la IMEI del GPS antes de obtener la ubicación.',
+                    'type': 'danger',
+                },
+            }
 
         url = "https://go.evisiongps.com/api/get_devices"
         params = {
@@ -37,18 +45,18 @@ class FleetVehicle(models.Model):
             response = requests.get(url, params=params, timeout=10)
             data = response.json()
 
-            # Si la API devuelve una lista, obtenemos el primer elemento
-            if isinstance(data, list) and data:
-                data = data[0]
+            # Validar la estructura de la respuesta
+            if isinstance(data, list) and len(data) > 0:
+                data = data[0]  # Tomamos el primer elemento
 
             if isinstance(data, dict) and 'lat' in data and 'lng' in data:
-                lat, lon = data.get('lat'), data.get('lng')
+                lat, lon = data['lat'], data['lng']
                 self.gps_last_location = f"{lat}, {lon}"
                 self.gps_last_update = fields.Datetime.now()
 
                 return {
                     'type': 'ir.actions.act_window',
-                    'name': 'Ubicación del Vehículo',
+                    'name': 'Ubicación GPS',
                     'res_model': 'fleet.vehicle',
                     'view_mode': 'form',
                     'views': [(self.env.ref('evisiongps-odoo.view_fleet_vehicle_map').id, 'form')],
@@ -72,7 +80,15 @@ class FleetVehicle(models.Model):
     def action_sync_gps(self):
         """Verifica si el vehículo existe en GPSWOX y, si no, lo crea."""
         if not self.gps_imei:
-            raise ValueError("Debe ingresar la IMEI del GPS antes de sincronizar.")
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Error',
+                    'message': 'Debe ingresar la IMEI del GPS antes de sincronizar.',
+                    'type': 'danger',
+                },
+            }
 
         url_get = "https://go.evisiongps.com/api/get_devices"
         params = {
